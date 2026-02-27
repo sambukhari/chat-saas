@@ -2,30 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Company extends Model
+class Company extends Authenticatable
 {
-    protected $fillable = [
-        'name',
-        'slug',
-        'ai_enabled',
-        'plan',
-        'is_active'
-    ];
+    protected $fillable = ['name','email','password','plan','is_active'];
+    protected $hidden = ['password'];
 
-    public function sites()
-    {
-        return $this->hasMany(CompanySite::class);
-    }
-
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
-
-    public function conversations()
-    {
-        return $this->hasMany(Conversation::class);
-    }
+    public function agents() { return $this->hasMany(Agent::class); }
+    public function sites() { return $this->hasMany(CompanySite::class); }
+    public function conversations() { return $this->hasMany(Conversation::class); }
 }

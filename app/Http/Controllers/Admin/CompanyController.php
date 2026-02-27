@@ -3,17 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Company;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class CompanyController extends Controller
 {
     public function index()
     {
-        $companies = Company::latest()->paginate(20);
+        $companies = Company::latest()->paginate(10);
         return view('admin.companies.index', compact('companies'));
     }
 
@@ -24,33 +22,52 @@ class CompanyController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => ['required','string','max:255'],
-            'plan' => ['required','in:free,pro,enterprise'],
-            'ai_enabled' => ['nullable','boolean'],
-
-            // company admin
-            'admin_name' => ['required','string','max:255'],
-            'admin_email' => ['required','email','max:255','unique:users,email'],
-            'admin_password' => ['required','string','min:8'],
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:companies',
+            'password' => 'required|min:6',
+            'plan' => 'required|string'
         ]);
 
-        $company = Company::create([
-            'name' => $data['name'],
-            'slug' => Str::slug($data['name']).'-'.Str::lower(Str::random(6)),
-            'plan' => $data['plan'],
-            'ai_enabled' => (bool)($data['ai_enabled'] ?? false),
-            'is_active' => true,
+        Company::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'plan' => $request->plan,
+            'is_active' => true
         ]);
 
-        User::create([
-            'name' => $data['admin_name'],
-            'email' => $data['admin_email'],
-            'password' => Hash::make($data['admin_password']),
-            'role' => 'company_admin',
-            'company_id' => $company->id,
+        return redirect()->route('admin.companies.index')
+            ->with('success', 'Company created successfully.');
+    }
+
+    public function edit(Company $company)
+    {
+        return view('admin.companies.edit', compact('company'));
+    }
+
+    public function update(Request $request, Company $company)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:companies,email,' . $company->id,
+            'plan' => 'required|string'
         ]);
 
-        return redirect()->route('admin.companies.index')->with('success', 'Company created');
+        $company->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'plan' => $request->plan,
+            'is_active' => $request->has('is_active')
+        ]);
+
+        return redirect()->route('admin.companies.index')
+            ->with('success', 'Company updated successfully.');
+    }
+
+    public function destroy(Company $company)
+    {
+        $company->delete();
+        return redirect()->route('admin.companies.index')->with('success', 'Company deleted successfully.');
     }
 }

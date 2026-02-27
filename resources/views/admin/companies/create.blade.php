@@ -1,85 +1,47 @@
-@extends('layouts.app')
+@extends('layouts.neon', ['title' => 'Create Company'])
 
 @section('content')
-<div class="container mt-4">
 
-    <h2 class="mb-4">Create Company</h2>
+<h4 class="mb-4">Create Company</h4>
 
-    <div class="card">
-        <div class="card-body">
+<div class="card-eze p-4">
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <strong>Fix the errors:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+<form method="POST" action="{{ route('admin.companies.store') }}">
+    @csrf
 
-            <form method="POST" action="{{ route('admin.companies.store') }}">
-                @csrf
+    <div class="row g-3">
+        <div class="col-md-6">
+            <input name="name" class="form-control" placeholder="Company Name" required>
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Company Name</label>
-                    <input type="text" name="name" class="form-control" required>
-                    @error('name')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
+        <div class="col-md-6">
+            <input name="email" type="email" class="form-control" placeholder="Email" required>
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Plan</label>
-                    <select name="plan" class="form-select" required>
-                        <option value="free">Free</option>
-                        <option value="pro">Pro</option>
-                        <option value="enterprise">Enterprise</option>
-                    </select>
-                    @error('plan')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
+        <div class="col-md-6">
+            <input name="password" type="password" class="form-control" placeholder="Password" required>
+        </div>
 
-                <div class="form-check mb-4">
-                    <input type="checkbox" name="ai_enabled" value="1" class="form-check-input" id="ai_enabled">
-                    <label class="form-check-label" for="ai_enabled">
-                        Enable AI Support
-                    </label>
-                </div>
-
-                <hr>
-
-                <h5 class="mb-3">Company Admin User</h5>
-
-                <div class="mb-3">
-                    <label class="form-label">Admin Name</label>
-                    <input type="text" name="admin_name" class="form-control" required>
-                    @error('admin_name')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Admin Email</label>
-                    <input type="email" name="admin_email" class="form-control" required>
-                    @error('admin_email')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label">Admin Password</label>
-                    <input type="password" name="admin_password" class="form-control" required>
-                    @error('admin_password')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <a href="{{ route('admin.companies.index') }}" class="btn btn-secondary">
-                        Cancel
-                    </a>
-
-                    <button type="submit" class="btn btn-dark">
-                        Create Company
-                    </button>
-                </div>
-
-            </form>
-
+        <div class="col-md-6">
+            <select name="plan" class="form-select">
+                <option value="free">Free</option>
+                <option value="pro">Pro</option>
+                <option value="enterprise">Enterprise</option>
+            </select>
         </div>
     </div>
 
+    <button class="btn-brand mt-4">Create</button>
+</form>
 </div>
+
 @endsection
