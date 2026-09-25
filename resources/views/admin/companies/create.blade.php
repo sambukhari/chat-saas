@@ -15,24 +15,24 @@
             </ul>
         </div>
     @endif
-<form method="POST" action="{{ route('admin.companies.store') }}">
+<form method="POST" class="company_form" action="{{ route('admin.companies.store') }}">
     @csrf
 
     <div class="row g-3">
         <div class="col-md-6">
-            <input name="name" class="form-control" placeholder="Company Name" required>
+            <input name="name" class="comp_name" placeholder="Company Name" required>
         </div>
 
         <div class="col-md-6">
-            <input name="email" type="email" class="form-control" placeholder="Email" required>
+            <input name="email" type="email" class="comp_email" placeholder="Email" required>
         </div>
 
         <div class="col-md-6">
-            <input name="password" type="password" class="form-control" placeholder="Password" required>
+            <input name="password" type="password" class="comp_passw" placeholder="Password" required>
         </div>
 
         <div class="col-md-6">
-            <select name="plan" class="form-select">
+            <select name="plan" class="form_select">
                 <option value="free">Free</option>
                 <option value="pro">Pro</option>
                 <option value="enterprise">Enterprise</option>

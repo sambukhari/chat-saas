@@ -8,7 +8,7 @@
         <div class="small-muted">Update tenant details and plan</div>
     </div>
 
-    <a href="{{ route('admin.companies.index') }}" class="btn-ghost">← Back</a>
+    <a href="{{ route('admin.companies.index') }}" class="btn-ghost"><i class="fa-solid fa-chevron-left"></i> Back</a>
 </div>
 
 @if($errors->any())
@@ -29,36 +29,36 @@
 <div class="card-eze p-4">
 
     {{-- UPDATE FORM --}}
-    <form method="POST" action="{{ route('admin.companies.update', $company) }}">
+    <form method="POST" class="company_form" action="{{ route('admin.companies.update', $company) }}">
         @csrf
         @method('PUT')
 
         <div class="row g-3">
 
             <div class="col-12 col-md-6">
-                <label class="form-label">Company Name</label>
+                <label class="form_label">Company Name</label>
                 <input
                     name="name"
-                    class="form-control"
+                    class="comp_name"
                     value="{{ old('name', $company->name) }}"
                     required
                 >
             </div>
 
             <div class="col-12 col-md-6">
-                <label class="form-label">Email</label>
+                <label class="form_label">Email</label>
                 <input
                     name="email"
                     type="email"
-                    class="form-control"
+                    class="comp_email"
                     value="{{ old('email', $company->email) }}"
                     required
                 >
             </div>
 
             <div class="col-12 col-md-6">
-                <label class="form-label">Plan</label>
-                <select name="plan" class="form-select" required>
+                <label class="form_label">Plan</label>
+                <select name="plan" class="form_select" required>
                     @php $plan = old('plan', $company->plan); @endphp
                     <option value="free" {{ $plan === 'free' ? 'selected' : '' }}>Free</option>
                     <option value="pro" {{ $plan === 'pro' ? 'selected' : '' }}>Pro</option>
@@ -76,10 +76,10 @@
                         value="1"
                         {{ old('is_active', $company->is_active) ? 'checked' : '' }}
                     >
-                    <label class="form-check-label" for="is_active">
+                    <label class="form_label" for="is_active">
                         Active
                     </label>
-                    <div class="small-muted mt-1">
+                    <div class="form_label">
                         Disable to block company login
                     </div>
                 </div>

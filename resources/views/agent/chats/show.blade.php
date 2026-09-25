@@ -7,47 +7,37 @@
     $agentAvatar = $agent->avatar ?? 'https://www.shutterstock.com/image-vector/ai-assistant-logo-friendly-robot-260nw-2630776459.jpg';
 @endphp
 
-<div class="chat-header neon-card p-3 mb-3 d-flex justify-content-between align-items-center">
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.body.dataset.currentConversationId = '{{ $conversation->id }}';
+    document.body.dataset.currentSiteId = '{{ $conversation->site_id }}';
+});
+</script>
 
+<div class="chat-header neon-card p-3 mb-3 d-flex justify-content-between align-items-center">
     <div>
         <strong>Conversation #{{ $conversation->id }}</strong>
     </div>
 
     <div id="chat-actions">
-
         @if(!$conversation->assigned_agent_id)
-            <button id="join-btn"
-                    class="btn btn-success btn-sm">
-                Join
-            </button>
-
+            <button id="join-btn" class="btn btn-success btn-sm">Join</button>
         @elseif($conversation->assigned_agent_id == $agent->id)
-            <button id="leave-btn"
-                    class="btn btn-warning btn-sm">
-                Leave
-            </button>
+            <button id="leave-btn" class="btn btn-warning btn-sm">Leave</button>
         @else
-            <span class="badge bg-secondary">
-                Assigned to another agent
-            </span>
+            <span class="badge bg-secondary">Assigned to another agent</span>
         @endif
-
     </div>
-
 </div>
 
 <div id="chat-box"
      class="neon-card p-4 mb-3 chat-wrapper"
      data-conversation-id="{{ $conversation->id }}"
-     data-last-id="{{ optional($conversation->messages->last())->id ?? 0 }}"
->
+     data-last-id="{{ optional($conversation->messages->last())->id ?? 0 }}">
 
-    @php
-        $lastDate = null;
-    @endphp
+    @php $lastDate = null; @endphp
 
     @foreach($conversation->messages as $msg)
-
         @php
             $msgDate = $msg->created_at->format('Y-m-d');
         @endphp
@@ -56,12 +46,10 @@
             @php
                 $today = now()->startOfDay();
                 $yesterday = now()->subDay()->startOfDay();
-                $msgDay = $msg->created_at->startOfDay();
+                $msgDay = $msg->created_at->copy()->startOfDay();
             @endphp
 
-            <div class="date-divider"
-                data-date="{{ $msg->created_at->toIso8601String() }}">
-
+            <div class="date-divider" data-date="{{ $msg->created_at->toIso8601String() }}">
                 @if($msgDay->equalTo($today))
                     Today
                 @elseif($msgDay->equalTo($yesterday))
@@ -69,147 +57,130 @@
                 @else
                     {{ $msg->created_at->format('d M Y') }}
                 @endif
-
             </div>
+
             @php $lastDate = $msgDate; @endphp
         @endif
 
-        <div class="chat-row {{ $msg->sender_type === 'agent' ? 'chat-agent' : 'chat-user' }}"
+        <div class="chat-row {{ $msg->sender_type === 'agent' ? 'chat-agent' : ($msg->sender_type === 'system' ? 'chat-system' : 'chat-user') }}"
              data-id="{{ $msg->id }}"
              data-time="{{ $msg->created_at->toIso8601String() }}">
 
-            <div class="avatar">
-                @if($msg->sender_type === 'agent')
-                    <img src="{{ $agentAvatar }}">
-                @else
-                    <div class="user-circle">
-                        <i class="fa fa-user"></i>
-                    </div>
-                @endif
-            </div>
-
-            <div class="chat-bubble">
-                <div class="chat-message">
-                    {{ $msg->message }}
+            @if($msg->sender_type !== 'system')
+                <div class="avatar">
+                    @if($msg->sender_type === 'agent')
+                        <img src="{{ $agentAvatar }}" alt="Agent">
+                    @else
+                        <div class="user-circle">
+                            <i class="fa fa-user"></i>
+                        </div>
+                    @endif
                 </div>
-                <div class="chat-time">
-                    {{ $msg->created_at->format('H:i') }}
-                </div>
-            </div>
+            @endif
 
+            <div class="{{ $msg->sender_type !== 'system' ? 'chat-bubble' : '' }}">
+                <div class="chat-message">{{ $msg->message }}</div>
+                <div class="chat-time">{{ $msg->created_at->format('H:i') }}</div>
+            </div>
         </div>
-
     @endforeach
-
 </div>
 
-
-<form id="reply-form" method="POST">
+<form id="reply-form" method="POST" onsubmit="return false;">
     @csrf
-
-    <div class="mb-3">
-        <textarea id="agent-message"
-                  class="form-control"
-                  {{ $conversation->assigned_agent_id == $agent->id ? '' : 'disabled' }}
-                  placeholder="{{ $conversation->assigned_agent_id == $agent->id ? 'Type a message...' : 'Join chat first to send message' }}"
-                  required></textarea>
+    <div class="send_msg_wrap">
+        <input id="agent-message"
+               class="form-control"
+               {{ $conversation->assigned_agent_id == $agent->id ? '' : 'disabled' }}
+               placeholder="{{ $conversation->assigned_agent_id == $agent->id ? 'Type a message...' : 'Join chat first to send message' }}"
+               required>
+        <button type="button"
+                id="send-btn"
+                title="Send Message"
+                class="btn btn-neon"
+                {{ $conversation->assigned_agent_id == $agent->id ? '' : 'disabled' }}>
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
     </div>
-
-    <button type="button"
-            id="send-btn"
-            class="btn btn-neon"
-            {{ $conversation->assigned_agent_id == $agent->id ? '' : 'disabled' }}>
-        Send
-    </button>
 </form>
-
 @endsection
-
 
 @push('after_styles_stack')
 <style>
 .chat-wrapper {
     max-height: 500px;
     overflow-y: auto;
-    background: linear-gradient(145deg, #0f172a, #111827);
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    font-family: 'Inter', sans-serif;
 }
-
 .chat-row {
     display: flex;
     margin-bottom: 18px;
     align-items: flex-end;
 }
-
-.chat-agent {
-    justify-content: flex-end;
-}
-
-.chat-user {
-    justify-content: flex-start;
-}
-
+.chat-agent { justify-content: flex-end; }
+.chat-user { justify-content: flex-start; }
 .avatar {
     width: 40px;
     height: 40px;
     margin: 0 10px;
 }
-
 .avatar img,
 .user-circle {
     width: 40px;
     height: 40px;
     border-radius: 50%;
 }
-
 .avatar img {
     object-fit: cover;
     border: 2px solid #0ea5e9;
 }
-
 .user-circle {
-    background: linear-gradient(135deg,#1e293b,#334155);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#fff;
-    font-size:16px;
+    background: #e0e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 500;
 }
-
 .chat-bubble {
     max-width: 65%;
     padding: 12px 16px;
     border-radius: 18px;
     position: relative;
     animation: fadeIn 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
-
 .chat-user .chat-bubble {
-    background: #1f2937;
-    color: #fff;
+    background: #f3f4f6;
+    color: #1f2937;
     border-bottom-left-radius: 4px;
 }
-
 .chat-agent .chat-bubble {
-    background: linear-gradient(135deg,#0ea5e9,#2563eb);
-    color: #fff;
+    background: #e0e7ff;
+    color: #272343;
     border-bottom-right-radius: 4px;
 }
-
 .chat-time {
     font-size: 11px;
     margin-top: 6px;
-    opacity: 0.7;
+    opacity: 0.6;
     text-align: right;
 }
-
+.chat-system .chat-time {
+    text-align: center;
+}
 .date-divider {
     text-align: center;
     font-size: 12px;
     margin: 20px 0;
-    color: #94a3b8;
+    color: #6b7280;
     position: relative;
 }
-
 .date-divider::before,
 .date-divider::after {
     content: "";
@@ -217,9 +188,8 @@
     top: 50%;
     width: 40%;
     height: 1px;
-    background: #334155;
+    background: #d1d5db;
 }
-
 .date-divider::before { left: 0; }
 .date-divider::after { right: 0; }
 
@@ -227,238 +197,247 @@
     from { opacity:0; transform:translateY(5px);}
     to { opacity:1; transform:translateY(0);}
 }
+
+.chat-system {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin: 16px 0;
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+}
 </style>
 @endpush
 
-
 @push('after_scripts_stack')
 <script>
-    
-    document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
+    const chatBox = document.getElementById("chat-box");
+    const conversationId = Number(chatBox.dataset.conversationId);
+    let lastMessageId = Number(chatBox.dataset.lastId || 0);
 
-        const chatBox = document.getElementById("chat-box");
-        const conversationId = chatBox.dataset.conversationId;
-        let lastMessageId = Number(chatBox.dataset.lastId || 0);
+    let isJoined = {{ $conversation->assigned_agent_id == $agent->id ? 'true' : 'false' }};
 
-        let agentLastEventId = Number(localStorage.getItem('agent_last_event_id') || 0);
-        let eventSource = null;
+    const messageInput = document.getElementById("agent-message");
+    const sendBtn = document.getElementById("send-btn");
+    const chatActions = document.getElementById("chat-actions");
 
-        function scrollBottom(){
-            chatBox.scrollTop = chatBox.scrollHeight;
+    function scrollBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function enableInput() {
+        isJoined = true;
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        messageInput.placeholder = "Type a message...";
+    }
+
+    function disableInput() {
+        isJoined = false;
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        messageInput.placeholder = "Join chat first to send message";
+    }
+
+    function formatDateDivider(dateStr) {
+        const msgDate = new Date(dateStr);
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        const isSameDay = (d1, d2) =>
+            d1.getFullYear() === d2.getFullYear() &&
+            d1.getMonth() === d2.getMonth() &&
+            d1.getDate() === d2.getDate();
+
+        if (isSameDay(msgDate, today)) return "Today";
+        if (isSameDay(msgDate, yesterday)) return "Yesterday";
+
+        return msgDate.toLocaleDateString(undefined, {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text ?? '';
+        return div.innerHTML;
+    }
+
+    function appendMessage(msg) {
+        if (!msg || !msg.id) return;
+        if (chatBox.querySelector('[data-id="' + msg.id + '"]')) return;
+
+        const newDividerText = formatDateDivider(msg.created_at);
+        const lastDivider = chatBox.querySelector(".date-divider:last-of-type");
+
+        if (!lastDivider || lastDivider.innerText.trim() !== newDividerText) {
+            const divider = document.createElement("div");
+            divider.className = "date-divider";
+            divider.innerText = newDividerText;
+            chatBox.appendChild(divider);
         }
 
-        scrollBottom();
+        const msgDate = new Date(msg.created_at);
+        const time = msgDate.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
-        function formatDateDivider(dateStr) {
+        const row = document.createElement("div");
+        row.dataset.id = msg.id;
+        row.dataset.time = msg.created_at;
 
-            const msgDate = new Date(dateStr);
-            const today = new Date();
-            const yesterday = new Date();
-
-            yesterday.setDate(today.getDate() - 1);
-
-            const isSameDay = (d1, d2) =>
-                d1.getFullYear() === d2.getFullYear() &&
-                d1.getMonth() === d2.getMonth() &&
-                d1.getDate() === d2.getDate();
-
-            if (isSameDay(msgDate, today)) return "Today";
-            if (isSameDay(msgDate, yesterday)) return "Yesterday";
-
-            return msgDate.toLocaleDateString(undefined, {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
-
-        function appendMessage(msg){
-
-            if (chatBox.querySelector(`[data-id="${msg.id}"]`)) return;
-
-            const msgDate = new Date(msg.created_at);
-            const dateKey = msgDate.toDateString();
-
-            const lastDivider = chatBox.querySelector(".date-divider:last-of-type");
-            const newDividerText = formatDateDivider(msg.created_at);
-
-            if (!lastDivider || lastDivider.innerText !== newDividerText) {
-
-                const divider = document.createElement("div");
-                divider.className = "date-divider";
-                divider.innerText = newDividerText;
-
-                chatBox.appendChild(divider);
-            }
-
-            const row = document.createElement("div");
-            row.className = "chat-row " + (msg.sender_type === 'agent' ? "chat-agent" : "chat-user");
-            row.dataset.id = msg.id;
-
+        if (msg.sender_type === 'system') {
+            row.className = "chat-row chat-system";
             row.innerHTML = `
-                <div class="avatar">
-                    ${msg.sender_type === 'agent'
-                        ? '<img src="{{ $agentAvatar }}">'
-                        : '<div class="user-circle"><i class="fa fa-user"></i></div>'}
-                </div>
-
-                <div class="chat-bubble">
-                    <div>${msg.message}</div>
-                    <div class="chat-time">
-                        ${
-                    const msgDate = new Date(msg.created_at);
-
-const timeString = isNaN(msgDate.getTime())
-    ? ''
-    : msgDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    }
-                    </div>
+                <div>
+                    <div class="chat-message">${escapeHtml(msg.message)}</div>
+                    <div class="chat-time">${time}</div>
                 </div>
             `;
-
-            chatBox.appendChild(row);
-            lastMessageId = msg.id;
-            scrollBottom();
+        } else if (msg.sender_type === 'agent') {
+            row.className = "chat-row chat-agent";
+            row.innerHTML = `
+                <div class="avatar">
+                    <img src="{{ $agentAvatar }}" alt="Agent">
+                </div>
+                <div class="chat-bubble">
+                    <div class="chat-message">${escapeHtml(msg.message)}</div>
+                    <div class="chat-time">${time}</div>
+                </div>
+            `;
+        } else {
+            row.className = "chat-row chat-user";
+            row.innerHTML = `
+                <div class="avatar">
+                    <div class="user-circle"><i class="fa fa-user"></i></div>
+                </div>
+                <div class="chat-bubble">
+                    <div class="chat-message">${escapeHtml(msg.message)}</div>
+                    <div class="chat-time">${time}</div>
+                </div>
+            `;
         }
 
-        function fetchNewMessages(){
-            fetch(`/agent/chats/${conversationId}/fetch-new?after_id=${lastMessageId}`)
-                .then(r=>r.json())
-                .then(data=>{
-                    if(!data.messages) return;
-                    data.messages.forEach(appendMessage);
-                });
-        }
+        chatBox.appendChild(row);
+        lastMessageId = Math.max(lastMessageId, Number(msg.id));
+        scrollBottom();
+    }
 
-        function startSSE(){
-            eventSource = new EventSource(`/agent/events?last_id=${agentLastEventId}`);
-
-            eventSource.addEventListener("company_message", function(e){
-                if(e.lastEventId){
-                    agentLastEventId = Number(e.lastEventId);
-                    localStorage.setItem('agent_last_event_id', agentLastEventId);
-                }
-                fetchNewMessages();
+    function fetchNewMessages() {
+        fetch(`/agent/chats/${conversationId}/fetch-new?after_id=${lastMessageId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data || !data.messages) return;
+                data.messages.forEach(appendMessage);
             });
+    }
 
-            eventSource.onerror = function(){
-                eventSource.close();
-                setTimeout(startSSE,3000);
-            };
-        }
+    function renderJoinButton() {
+        chatActions.innerHTML = `<button id="join-btn" class="btn btn-success btn-sm">Join</button>`;
+        bindJoinButton();
+        disableInput();
+    }
 
-        startSSE();
+    function renderLeaveButton() {
+        chatActions.innerHTML = `<button id="leave-btn" class="btn btn-warning btn-sm">Leave</button>`;
+        bindLeaveButton();
+        enableInput();
+    }
+
+    function bindJoinButton() {
         const joinBtn = document.getElementById("join-btn");
+        if (!joinBtn) return;
+
+        joinBtn.addEventListener("click", function () {
+            fetch(`/agent/chats/${conversationId}/join`, {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Accept": "application/json"
+                }
+            })
+            .then(r => r.json())
+            .then(() => {
+                renderLeaveButton();
+                messageInput.focus();
+            });
+        });
+    }
+
+    function bindLeaveButton() {
         const leaveBtn = document.getElementById("leave-btn");
-        const sendBtn = document.getElementById("send-btn");
-        const messageInput = document.getElementById("agent-message");
+        if (!leaveBtn) return;
 
-        function enableInput() {
-            messageInput.disabled = false;
-            sendBtn.disabled = false;
-            messageInput.placeholder = "Type a message...";
-        }
-
-        function disableInput() {
-            messageInput.disabled = true;
-            sendBtn.disabled = true;
-            messageInput.placeholder = "Join chat first to send message";
-        }
-
-        /* =========================
-        JOIN CHAT
-        ========================= */
-
-        if (joinBtn) {
-            joinBtn.addEventListener("click", function () {
-
-                fetch(`/agent/chats/${conversationId}/join`, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    }
-                })
-                .then(r => r.json())
-                .then(() => {
-
-                    joinBtn.remove();
-
-                    const leaveButton = document.createElement("button");
-                    leaveButton.id = "leave-btn";
-                    leaveButton.className = "btn btn-warning btn-sm";
-                    leaveButton.innerText = "Leave";
-                    document.getElementById("chat-actions").appendChild(leaveButton);
-
-                    enableInput();
-
-                    attachLeaveHandler(leaveButton);
-                });
+        leaveBtn.addEventListener("click", function () {
+            fetch(`/agent/chats/${conversationId}/leave`, {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Accept": "application/json"
+                }
+            })
+            .then(r => r.json())
+            .then(() => {
+                renderJoinButton();
             });
-        }
+        });
+    }
 
-        /* =========================
-        LEAVE CHAT
-        ========================= */
+    if (sendBtn) {
+        sendBtn.addEventListener("click", function () {
+            if (!isJoined || messageInput.disabled) return;
 
-        function attachLeaveHandler(button) {
+            const message = messageInput.value.trim();
+            if (!message) return;
 
-            button.addEventListener("click", function () {
+            fetch(`/agent/chats/${conversationId}/reply`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(r => r.json())
+            .then((data) => {
+                messageInput.value = "";
 
-                fetch(`/agent/chats/${conversationId}/leave`, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    }
-                })
-                .then(r => r.json())
-                .then(() => {
-
-                    button.remove();
-
-                    const joinButton = document.createElement("button");
-                    joinButton.id = "join-btn";
-                    joinButton.className = "btn btn-success btn-sm";
-                    joinButton.innerText = "Join";
-                    document.getElementById("chat-actions").appendChild(joinButton);
-
-                    disableInput();
-
-                    joinButton.addEventListener("click", arguments.callee);
-                });
+                if (data && data.message) {
+                    appendMessage(data.message);
+                } else {
+                    fetchNewMessages();
+                }
             });
-        }
+        });
 
-        if (leaveBtn) {
-            attachLeaveHandler(leaveBtn);
-        }
+        messageInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+    }
 
-        /* =========================
-        SEND MESSAGE (AJAX)
-        ========================= */
-
-        if (sendBtn) {
-
-            sendBtn.addEventListener("click", function () {
-
-                if (messageInput.disabled) return;
-
-                const message = messageInput.value.trim();
-                if (!message) return;
-
-                fetch(`/agent/chats/${conversationId}/reply`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({ message: message })
-                })
-                .then(r => r.json())
-                .then(() => {
-                    messageInput.value = "";
-                });
-            });
+    window.addEventListener('agent-company-message', function (e) {
+        const detail = e.detail || {};
+        if (Number(detail.conversation_id || 0) === conversationId) {
+            fetchNewMessages();
         }
     });
+
+    scrollBottom();
+    bindJoinButton();
+    bindLeaveButton();
+});
 </script>
 @endpush

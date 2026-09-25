@@ -24,6 +24,19 @@
     let eventSource = null;
     const seenMessageIds = new Set();
     let lastRenderedDateKey = null;
+    let initialLoad = true;
+
+    /* ============================================================
+    SOUND
+    ============================================================ */
+
+    const messageSound = new Audio(BASE_URL + "/sounds/message.mp3");
+    messageSound.preload = "auto";
+
+    function playMessageSound() {
+        messageSound.currentTime = 0;
+        messageSound.play().catch(()=>{});
+    }
 
     /* ============================================================
        DOM HELPERS
@@ -164,7 +177,16 @@
     #sc-toggle:active {
         transform: translateY(-1px);
     }
-
+    #sc-toggle img.chat-icon {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+    }
+    #sc-close img.close-chat-icon {
+        width: 12px;
+        height: 12px;
+        object-fit: contain;
+    }
     /* Chat box */
     #sc-box {
         width: 360px;
@@ -498,7 +520,7 @@
     widget.id = "sc-widget";
     widget.innerHTML = `
 <button id="sc-toggle" aria-label="Open Chat" onclick="toggleChat()">
-    <i class="fa fa-comments"></i>
+    <img src="https://chat.ezead.com/images/chat.png" alt="Chat" class="chat-icon">
 </button>
 <div id="sc-box">
     <div id="sc-header">
@@ -507,7 +529,7 @@
             <small>We are here to help</small>
         </div>
         <button id="sc-close" aria-label="Close Chat">
-            <i class="fa fa-times"></i>
+            <img src="https://chat.ezead.com/images/cancel.png" alt="Chat Close" class="close-chat-icon">
         </button>
     </div>
     <div id="sc-messages"></div>
@@ -558,6 +580,10 @@
         // Prevent duplicates
         if (messageId && seenMessageIds.has(messageId)) return;
         if (messageId) seenMessageIds.add(messageId);
+        /* PLAY SOUND for incoming messages */
+        if (!initialLoad && msg.from !== "user") {
+            playMessageSound();
+        }
 
         const createdAt = msg.created_at ? new Date(msg.created_at) : new Date();
         const dateKey = createdAt.toDateString();
@@ -719,6 +745,7 @@
         }).then(data => {
             if (!data.messages) return;
             data.messages.forEach(addMessage);
+            initialLoad = false;
         });
     }
 
@@ -730,6 +757,7 @@
             qs("sc-input").style.display = "flex";
 
             data.messages.forEach(addMessage);
+            initialLoad = false;
             
             startSSE();
         });

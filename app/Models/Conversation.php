@@ -15,13 +15,5 @@ class Conversation extends Model
     public function site() { return $this->belongsTo(CompanySite::class, 'company_site_id'); }
     public function agent() { return $this->belongsTo(Agent::class, 'assigned_agent_id'); }
     public function messages() { return $this->hasMany(Message::class); }
-    public function assignedUser()
-    {
-        return $this->belongsTo(User::class, 'assigned_user_id');
-    }
-
-    public function events()
-    {
-        return $this->hasMany(ConversationEvent::class);
-    }
+    public function assignedUser(){ return $this->belongsTo(User::class, 'assigned_user_id'); }
 }

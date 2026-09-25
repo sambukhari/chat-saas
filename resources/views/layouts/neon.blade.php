@@ -3,35 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-   <link rel="icon" type="image/png" sizes="32x32" href="https://eze.pics/ezead-com/public/favicon/favicon-32x32.png"
-        title="Powered by Ezead AI">
+<link rel="icon" type="image/png" sizes="32x32" href="https://eze.pics/ezead-com/public/favicon/favicon-32x32.png" title="Powered by Ezead AI">
 <title>{{ $title ?? 'EzeAD Workspace' }}</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
 <style>
-/* =========================================================
-   EzeAD Brand Dark Theme (Blue + Orange)
-   ========================================================= */
 :root{
-    --bg0:#050814;              /* deepest */
-    --bg1:#070b1c;              /* base */
-    --panel:#0b122a;            /* sidebar/panels */
-    --card:rgba(12,18,40,.72);  /* card glass */
+    --bg0:#050814;
+    --bg1:#070b1c;
+    --panel:#0b122a;
+    --card:rgba(12,18,40,.72);
     --stroke:rgba(255,255,255,.10);
-
-    --blue:#1EA7FF;             /* brand blue */
-    --blue2:#2B7CFF;            /* deeper blue */
-    --orange:#FF8A1E;           /* brand orange */
-    --orange2:#FFB24A;          /* warmer */
+    --blue:#1EA7FF;
+    --blue2:#2B7CFF;
+    --orange:#FF8A1E;
+    --orange2:#FFB24A;
     --text:#EAF2FF;
     --muted:rgba(234,242,255,.68);
-
     --shadow: 0 18px 60px rgba(0,0,0,.45);
     --radius: 18px;
 }
 
-/* Base */
 html,body{height:100%;}
 body{
     margin:0;
@@ -42,15 +36,18 @@ body{
                 linear-gradient(180deg, var(--bg0), var(--bg1));
     overflow-x:hidden;
 }
+a{ text-decoration:none; }
+
 .logosmall{
-    width:110px;
-    display: block;
+    width:150px;
+    display:block;
+    padding:10px;
+    background:#fff;
+    border-radius:50px;
 }
-.logosmall img{
-    width:100%;
-}
+.logosmall img{ width:100%; }
+
 .btn-neon-outline {
-    border: 1px solid #0ea5e9;
     color: #0ea5e9;
     background: transparent;
     border-radius: 25px;
@@ -58,14 +55,12 @@ body{
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 .btn-neon-outline:hover {
     background: linear-gradient(135deg,#0ea5e9,#2563eb);
     color: #fff;
     box-shadow: 0 0 12px rgba(14,165,233,.6);
 }
 
-/* Subtle animated background gradient */
 .bg-anim{
     position:fixed;
     inset:-40%;
@@ -82,7 +77,6 @@ body{
     100%{ transform: translate3d(2%, 1.5%, 0) scale(1.05); opacity:.95; }
 }
 
-/* Floating orbs */
 .orb{
     position:fixed;
     border-radius:999px;
@@ -112,7 +106,6 @@ body{
     100%{ transform: translateY(22px) translateX(-18px); }
 }
 
-/* Spark canvas layer */
 #sparkCanvas{
     position:fixed;
     inset:0;
@@ -121,35 +114,63 @@ body{
     opacity:.85;
 }
 
-/* Layout wrappers */
-.app{
-    position:relative;
-    z-index:2;
+.nav-submenu{ padding-left:20px; }
+.nav-subitem{
+    display:block;
+    padding:6px 10px;
+    font-size:14px;
 }
+.nav-subitem.active{ font-weight:bold; }
 
-/* Topbar */
+.nav-submenu{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding-left:20px;
+}
+.nav-submenu.show{ display:block; }
+
+.nav-subitem{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:6px 10px;
+    font-size:14px;
+}
+.nav-subitem .chat-counter {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: hsl(45, 100%, 51%);
+}
+.dropdown-toggle{ cursor:pointer; }
+
+.app{ position:relative; z-index:2; }
+
 .topbar{
-    height:72px;
     position:fixed;
     top:0; left:0; right:0;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:0 18px;
-    background: linear-gradient(180deg, rgba(11,18,42,.78), rgba(11,18,42,.46));
-    backdrop-filter: blur(10px);
-    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:10px 18px;
+    background:#0074A3;
     z-index:20;
 }
 
 .btn-neon{
-    background: linear-gradient(90deg, rgba(0,247,255,.22), rgba(168,85,247,.22));
-    border:1px solid rgba(0,247,255,.35);
+    background:#0074A3;
     color:var(--text);
 }
 .btn-neon:hover{
     border-color: rgba(168,85,247,.55);
-    box-shadow: 0 0 24px rgba(168,85,247,.18);
+    background:transparent;
+    color:#000;
 }
 
 .brand{
@@ -191,22 +212,20 @@ body{
 .brand .tag{
     display:block;
     font-size:12px;
-    color: var(--muted);
+    color:#fff;
     margin-top:2px;
 }
 
-/* Topbar right */
 .role-pill{
-    font-size:12px;
-    color: var(--text);
-    background: rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.10);
-    padding:6px 10px;
-    border-radius:999px;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, .10);
+    padding: 6px 10px;
+    border-radius: 999px;
 }
 .role-pill b{ color: var(--blue); }
 
-/* Sidebar */
 .sidebar{
     width:284px;
     position:fixed;
@@ -214,9 +233,8 @@ body{
     left:0;
     height:calc(100vh - 72px);
     padding:18px 14px;
-    background: linear-gradient(180deg, rgba(11,18,42,.82), rgba(11,18,42,.62));
-    border-right:1px solid rgba(255,255,255,.08);
-    backdrop-filter: blur(10px);
+    background:#fff;
+    border-right:1px solid #272343;
     z-index:15;
     transition: transform .28s ease;
 }
@@ -233,11 +251,12 @@ body{
     gap:10px;
     padding:11px 12px;
     border-radius:14px;
-    color: rgba(234,242,255,.86);
+    color:#272343;
     border:1px solid transparent;
     transition: transform .18s ease, background .18s ease, border-color .18s ease;
     position:relative;
 }
+.nav-subitem{ text-transform: uppercase; }
 .nav-item:hover{
     background: rgba(30,167,255,.08);
     border-color: rgba(30,167,255,.14);
@@ -270,14 +289,13 @@ body{
     box-shadow: 0 0 22px rgba(255,138,30,.18), 0 0 22px rgba(30,167,255,.14);
 }
 
-/* Logout button */
 .btn-logout{
     margin-top:12px;
     width:100%;
     border-radius:14px;
-    border:1px solid rgba(255,255,255,.12);
+    border:1px solid #666;
     background: rgba(255,255,255,.06);
-    color: var(--text);
+    color:#000;
     padding:10px 12px;
     transition: transform .18s ease, border-color .18s ease, background .18s ease;
 }
@@ -287,22 +305,27 @@ body{
     background: rgba(255,138,30,.08);
 }
 
-/* Main */
 .main{
     margin-top:72px;
     margin-left:284px;
     padding:26px;
-    min-height:calc(100vh - 72px);
+    min-height:100svh;
     animation: contentIn .35s ease both;
+    background:#f9f9f9;
+}
+.main h4,
+.main .display-6,
+.main .text-muted-neon,
+.main .neon-title{
+    color:#000;
 }
 @keyframes contentIn{
     from{ opacity:0; transform: translateY(6px); }
     to{ opacity:1; transform: translateY(0); }
 }
 
-/* Cards / Panels */
 .card-eze{
-    background: var(--card);
+    background: transparent;
     border:1px solid rgba(255,255,255,.10);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -313,11 +336,10 @@ body{
     border-bottom:1px solid rgba(255,255,255,.08);
 }
 
-/* Inputs */
 .form-control, .form-select, textarea{
     background: rgba(255,255,255,.05) !important;
     border: 1px solid rgba(255,255,255,.12) !important;
-    color: var(--text) !important;
+    color: #000 !important;
     border-radius: 14px !important;
 }
 .form-control:focus, .form-select:focus, textarea:focus{
@@ -326,32 +348,34 @@ body{
 }
 .form-control::placeholder{ color: rgba(234,242,255,.50); }
 
-/* Buttons */
 .btn-brand{
     border:none;
     border-radius:14px;
     padding:10px 14px;
-    color:#081025;
+    color:#fff;
     font-weight:700;
-    background: linear-gradient(135deg, var(--blue), var(--orange));
+    border:1px solid #0074A3;
+    background:#0074A3;
     box-shadow: 0 10px 28px rgba(30,167,255,.12);
     transition: transform .18s ease, filter .18s ease;
 }
-.btn-brand:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+.btn-brand:hover{
+    border-color:#0074a3;
+    color:#272343;
+    background: transparent;
+}
 .btn-ghost{
-    border-radius:14px;
+    border-radius:5px;
     border:1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.05);
+    background:#0074a3;
     color: var(--text);
-    padding:10px 14px;
+    padding:4px 8px;
     font-weight:600;
+    position: relative;
+    top: 4px;
 }
-.btn-ghost:hover{
-    border-color: rgba(255,138,30,.22);
-    background: rgba(255,138,30,.08);
-}
+.btn-ghost:hover{ border-color: rgba(255,138,30,.22); }
 
-/* Tables */
 .table-dark{
     --bs-table-bg: transparent;
     --bs-table-striped-bg: rgba(255,255,255,.03);
@@ -359,14 +383,14 @@ body{
     color: rgba(234,242,255,.90);
 }
 .table thead th{
-    color: rgba(234,242,255,.70);
-    border-bottom:1px solid rgba(255,255,255,.10) !important;
+    color:#000;
+    border-bottom:1px solid #000 !important;
 }
 .table td, .table th{
+    color:#000 !important;
     border-color: rgba(255,255,255,.08) !important;
 }
 
-/* Responsive: mobile sidebar slide */
 @media (max-width: 992px){
     .sidebar{
         transform: translateX(-110%);
@@ -375,27 +399,19 @@ body{
         box-shadow: 0 18px 60px rgba(0,0,0,.55);
         border-right:1px solid rgba(255,255,255,.10);
     }
-    .sidebar.show{
-        transform: translateX(0);
-    }
+    .sidebar.show{ transform: translateX(0); }
     .main{
         margin-left:0;
         padding:18px;
     }
 }
 
-/* Guest mode (no sidebar/topbar) */
 .guest-wrap{
     min-height:100vh;
     display:flex;
     align-items:center;
     justify-content:center;
     padding:24px;
-}
-.guest-card{
-    width:100%;
-    max-width: 460px;
-    padding: 22px;
 }
 .guest-head{
     display:flex;
@@ -410,18 +426,316 @@ body{
     box-shadow: 0 0 0 1px rgba(30,167,255,.10), 0 0 30px rgba(30,167,255,.12);
 }
 .small-muted{ color: var(--muted); }
+
+@media screen and (max-width:767px){
+    .guest-wrap{ padding:0px; }
+    .guest-head {
+        display: flex;
+        margin: auto;
+        justify-content: center;
+    }
+}
+
+.text-muted { color: rgb(177 182 186 / 75%) !important; }
+
+.send_msg_wrap {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    overflow:hidden;
+    border:1px solid #0074a3;
+    border-radius:50px;
+}
+.send_msg_wrap input:focus{
+    color:#666 !important;
+    box-shadow:none !important;
+    border:0 !important;
+    outline:0;
+}
+.send_msg_wrap input::placeholder{ color:#666 !important; }
+.send_msg_wrap .btn-neon { border-radius:50%; }
+.btn-outline-light{
+border-color: rgba(168, 85, 247, .55);
+background: transparent;
+color: #000;
+}
+.btn-outline-light:hover{
+    background:#0074a3;
+    color:#fff;
+}
+body {
+    background:#f9f9f9;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.eze_logo{
+    display:flex;
+    align-items:start;
+    justify-content:start;
+    width:224px;
+    height:63px;
+}
+.eze_logo img {
+    width:80%;
+    height:auto;
+    display:block;
+    aspect-ratio: 224 / 63;
+}
+
+.admin_login *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+.admin_login{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100svh;
+}
+.admin_login .login{
+    width:450px;
+    background:#fff;
+    padding:40px 35px;
+    border-radius:10px;
+    box-shadow:0 10px 35px rgba(0,0,0,0.08);
+    margin:auto;
+}
+.admin_login .form_title{
+    text-align:center;
+    margin-bottom:30px;
+}
+.admin_login .form_title h2{
+    font-family:'DM Serif Display', serif;
+    font-size:28px;
+    line-height:32px;
+    font-weight:700;
+    color:#1a1a1a;
+}
+.admin_login .form_title span{
+    font-size:14px;
+    color:#666;
+}
+.admin_login form{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.admin_login .field{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+.admin_login .field label{
+    font-size:14px;
+    font-weight:500;
+    color:#333;
+    display:block;
+    margin-bottom:6px;
+}
+.admin_login .input-wrap{ position:relative; }
+.admin_login .input-wrap input{
+    width:100%;
+    height:45px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    padding:0 40px;
+    font-size:14px;
+    outline:none;
+    transition:0.3s;
+}
+.admin_login .input-wrap input:focus{ border-color:#0074A3; }
+.admin_login .icon{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#888;
+}
+.admin_login .toggle-pw{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:none;
+    cursor:pointer;
+    color:#777;
+    font-size:15px;
+}
+.admin_login .btn-login{
+    width:100%;
+    height:45px;
+    border:none;
+    border-radius:6px;
+    background:#f38521;
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:5px;
+    transition:0.3s;
+}
+.admin_login .btn-login:hover{ background:#da741c; }
+.admin_login .meta-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+    font-size:13px;
+}
+.admin_login .remember{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#555;
+}
+.admin_login #remember{ position:relative; top:2px; }
+.admin_login .forgot{
+    text-decoration:none;
+    color:#0074A3;
+}
+.admin_login .switch-portal{
+    margin-top:30px;
+    text-align:center;
+}
+.admin_login .switch-portal p{
+    font-size:14px;
+    color:#666;
+    margin-bottom:10px;
+}
+.admin_login .portal-btns{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+}
+.admin_login .btn-portal{
+    border-radius:6px;
+    border:1px solid #0074A3;
+    background:#00A9DA29;
+    color:#0074A3;
+    font-size:16px;
+    line-height:22px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+    text-decoration:none;
+    text-align:center;
+    padding:10px 25px;
+}
+.admin_login .btn-portal:hover{
+    background:#0074A3;
+    color:#fff;
+}
+
+@media screen and (max-width:991px){
+    .eze_logo { margin-bottom:20px !important; }
+}
+@media screen and (max-width:767px){
+    .admin_login {
+        width:100%;
+        height:95svh;
+    }
+    .eze_logo {
+        width:180px;
+        height:30px;
+        margin:auto;
+        align-items:center;
+        justify-content:center;
+    }
+    .admin_login .form_title { margin-bottom:15px; }
+    .admin_login .login {
+        width:95%;
+        padding:20px 20px;
+    }
+    .admin_login .switch-portal { margin-top:15px; }
+    .admin_login .form_title h2{
+        font-size:20px;
+        line-height:26px;
+    }
+    .admin_login #remember { top:0px; }
+    .admin_login .btn-portal {
+        font-size:14px;
+        line-height:20px;
+        padding:10px 20px;
+    }
+}
+.text-muted{ color:#666 !important; }
+.chat-header{ color:#666; }
+
+.nav-submenu {
+    position: relative;
+}
+.site-pagination {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:8px;
+    border-top:1px solid rgba(0,0,0,0.1);
+    background: rgba(0,0,0,0.02);
+}
+.site-pagination .sp-btn {
+    background:gray;
+    border:none;
+    color:#fff;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    font-size:12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: all 0.25s;
+}
+.site-pagination .sp-btn:hover:not(:disabled) {
+    background:#0074a3;
+    color:#fff;
+}
+.site-pagination .sp-btn:disabled {
+    opacity:0.3;
+    cursor:not-allowed;
+}
+.site-pagination .sp-info {
+    font-size:11px;
+    color:#666;
+    min-width:50px;
+    text-align:center;
+}
+</style>
+<style>
+.badge.badge-soft{
+    color:#272343;
+}
+.company_form .form_label{
+    color:#272343;
+    margin-bottom:10px;
+}
+    .company_form .form_select,
+    .company_form .comp_email,
+    .company_form .comp_passw,
+    .company_form .comp_name{
+        width: 100%;
+        font-size: 14px;
+        line-height: 22px;
+        padding: 8px;
+        border-radius: 40px;
+        border: 1px solid #666;
+    }
+    .company_form .form_select:focus,
+    .company_form .comp_email:focus,
+    .company_form .comp_passw:focus,
+    .company_form .comp_name:focus{
+    border-color: #0074a3;
+    outline: none;
+}
+
 </style>
 @stack('after_styles_stack')
-
 @stack('head')
 </head>
-
 <body>
-
-<div class="bg-anim"></div>
-<div class="orb blue"></div>
-<div class="orb orange"></div>
-<canvas id="sparkCanvas"></canvas>
 
 @php
     $isLoggedIn =
@@ -437,24 +751,20 @@ body{
 
 @if($isLoggedIn)
 <div class="app">
-
-    {{-- TOPBAR --}}
     <div class="topbar">
         <div class="d-flex align-items-center gap-3">
             <button class="btn btn-ghost d-lg-none py-2 px-3" type="button" onclick="toggleSidebar()">
                 ☰
             </button>
-
             <div class="brand">
                 <div>
-                     <a class="logosmall" href="/" aria-label="Ezead Home">
-                      <img src="https://eze.pics/ezead-chat-images/logo2.png" alt="Ezead Logo" />
+                    <a class="logosmall" href="/" aria-label="Ezead Home">
+                        <img src="https://eze.pics/ezead-chat-images/logo2.png" alt="Ezead Logo" />
                     </a>
                     <span class="tag">Workspace Dashboard</span>
                 </div>
             </div>
         </div>
-
         <div class="d-flex align-items-center gap-2">
             <div class="role-pill">
                 Logged in as <b>{{ $roleLabel }}</b>
@@ -462,18 +772,16 @@ body{
         </div>
     </div>
 
-    {{-- SIDEBAR --}}
     <aside id="sidebar" class="sidebar">
-        <div class="section-title">Navigation</div>
+        <div class="section-title text-dark">Navigation</div>
 
-        {{-- ADMIN --}}
         @if(Auth::guard('admin')->check())
             <a class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
                href="{{ route('admin.dashboard') }}">
                 <span class="nav-dot"></span> Dashboard
             </a>
 
-            <a class="nav-item" href="{{ route('admin.companies.index') }}" >
+            <a class="nav-item" href="{{ route('admin.companies.index') }}">
                 <span class="nav-dot"></span> Companies
             </a>
 
@@ -487,7 +795,6 @@ body{
             </form>
         @endif
 
-        {{-- COMPANY --}}
         @if(Auth::guard('company')->check())
             <a class="nav-item {{ request()->routeIs('company.dashboard') ? 'active' : '' }}"
                href="{{ route('company.dashboard') }}">
@@ -515,17 +822,56 @@ body{
             </form>
         @endif
 
-        {{-- AGENT --}}
         @if(Auth::guard('agent')->check())
+            @php
+                $agent = Auth::guard('agent')->user();
+                $sites = $agent->company->sites;
+
+                $currentConversationId = isset($conversation) ? $conversation->id : null;
+                $currentSiteId = isset($conversation) ? $conversation->site_id : request()->get('site');
+            @endphp
+
             <a class="nav-item {{ request()->routeIs('agent.dashboard') ? 'active' : '' }}"
                href="{{ route('agent.dashboard') }}">
                 <span class="nav-dot"></span> Dashboard
             </a>
 
-            <a class="nav-item {{ request()->routeIs('agent.chats.*') ? 'active' : '' }}"
-               href="{{ route('agent.chats.index') }}">
-                <span class="nav-dot"></span> My Chats
-            </a>
+            <div class="nav-item dropdown-toggle" onclick="toggleChatsMenu()">
+                <span class="nav-dot"></span> All Chats
+            </div>
+
+            <div id="chatsDropdown" class="nav-submenu">
+                <div id="sites-list">
+                    @foreach($sites as $site)
+                        @php
+                            $siteUnread = method_exists($site, 'getUnreadCountForAgentAttribute')
+                                ? $site->unread_count_for_agent
+                                : ($site->unread_count ?? 0);
+
+                            if (!empty($conversation) && (int)$conversation->site_id === (int)$site->id) {
+                                $siteUnread = max(0, (int)$siteUnread - (int)($conversation->unread_count ?? 0));
+                            }
+                        @endphp
+
+                        <a class="nav-subitem nav-item {{ request()->get('site') == $site->id ? 'active' : '' }}"
+                           href="{{ route('agent.chats.index',['site'=>$site->id]) }}"
+                           data-site-id="{{ $site->id }}">
+                            {{ $site->domain }}
+                            <span class="chat-counter"
+                                  id="counter-site-{{ $site->id }}"
+                                  data-site-id="{{ $site->id }}">
+                                {{ $siteUnread }}
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+
+                <div class="site-pagination" id="site-pagination" style="display:none;">
+                    <button class="sp-btn" id="site-prev"><i class="fa fa-chevron-left"></i></button>
+                    <span class="sp-info" id="site-info">1 / 1</span>
+                    <button class="sp-btn" id="site-next"><i class="fa fa-chevron-right"></i></button>
+                </div>
+            </div>
 
             <form method="POST" action="{{ route('agent.logout') }}">
                 @csrf
@@ -534,48 +880,85 @@ body{
         @endif
     </aside>
 
-    {{-- MAIN --}}
     <main class="main">
         @yield('content')
     </main>
-
 </div>
-
 @else
-
-{{-- GUEST (LOGIN) --}}
 <div class="guest-wrap">
-    <div class="card-eze guest-card">
-        <div class="guest-head">
-            <div>
-               <a class="logosmall" href="/" aria-label="Ezead Home">
-              <img src="https://eze.pics/ezead-chat-images/logo2.png" alt="Ezead Logo" />
-            </a>
-                <div class="small-muted">Secure access portal</div>
-            </div>
-        </div>
-
-        @yield('content')
-    </div>
+    @yield('content')
 </div>
-
 @endif
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* =========================================================
-   Sidebar toggle (mobile)
-   ========================================================= */
+var _sitePage = 1;
+var PER_SITE = 7;
+
+function applySitePagination() {
+    var list = document.getElementById('sites-list');
+    var paginationEl = document.getElementById('site-pagination');
+    var prevBtn = document.getElementById('site-prev');
+    var nextBtn = document.getElementById('site-next');
+    var infoEl = document.getElementById('site-info');
+
+    if (!list) return;
+
+    var items = Array.from(list.querySelectorAll('.nav-subitem'));
+    var total = items.length;
+    var totalPages = Math.max(1, Math.ceil(total / PER_SITE));
+
+    _sitePage = Math.min(_sitePage, totalPages);
+    var start = (_sitePage - 1) * PER_SITE;
+
+    items.forEach(function(item, i) {
+        item.style.display = (i >= start && i < start + PER_SITE) ? '' : 'none';
+    });
+
+    if (paginationEl) paginationEl.style.display = totalPages > 1 ? 'flex' : 'none';
+    if (infoEl) infoEl.textContent = _sitePage + ' / ' + totalPages;
+    if (prevBtn) prevBtn.disabled = _sitePage === 1;
+    if (nextBtn) nextBtn.disabled = _sitePage === totalPages;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var prevBtn = document.getElementById('site-prev');
+    var nextBtn = document.getElementById('site-next');
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (_sitePage > 1) {
+                _sitePage--;
+                applySitePagination();
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (_sitePage < 9999) {
+                _sitePage++;
+                applySitePagination();
+            }
+        });
+    }
+
+    applySitePagination();
+});
+</script>
+
+<script>
 function toggleSidebar(){
     const sb = document.getElementById('sidebar');
     if (!sb) return;
     sb.classList.toggle('show');
 }
 
-/* =========================================================
-   Spark / Particle Canvas (lightweight, efficient)
-   ========================================================= */
 (function(){
     const canvas = document.getElementById('sparkCanvas');
     if(!canvas) return;
@@ -594,7 +977,6 @@ function toggleSidebar(){
     window.addEventListener('resize', resize, { passive:true });
     resize();
 
-    // particles
     const count = Math.min(90, Math.floor((window.innerWidth * window.innerHeight) / 24000));
     const parts = [];
     const colors = [
@@ -621,12 +1003,10 @@ function toggleSidebar(){
     function step(){
         ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
 
-        // dots
         for(const p of parts){
             p.x += p.vx;
             p.y += p.vy;
 
-            // wrap
             if(p.x < -10) p.x = window.innerWidth + 10;
             if(p.x > window.innerWidth + 10) p.x = -10;
             if(p.y < -10) p.y = window.innerHeight + 10;
@@ -639,7 +1019,6 @@ function toggleSidebar(){
             ctx.fill();
         }
 
-        // connecting spark lines (only a few nearest, cheap)
         ctx.globalAlpha = 0.22;
         for(let i=0;i<parts.length;i++){
             const a = parts[i];
@@ -665,10 +1044,136 @@ function toggleSidebar(){
     }
     step();
 })();
+
+function toggleChatsMenu() {
+    let menu = document.getElementById('chatsDropdown');
+    if (menu) menu.classList.toggle('show');
+}
 </script>
+
+@if(Auth::guard('agent')->check())
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.__agentGlobalSSEInitialized) return;
+    window.__agentGlobalSSEInitialized = true;
+
+    let agentLastEventId = Number(localStorage.getItem('agent_last_event_id') || 0);
+    let eventSource = null;
+
+    const currentConversationId = Number(document.body.dataset.currentConversationId || 0);
+    const currentSiteId = Number(document.body.dataset.currentSiteId || 0);
+
+    const sound = new Audio('/sounds/new-message.mp3');
+    sound.preload = 'auto';
+
+    function setSiteCounter(siteId, value) {
+        const el = document.getElementById('counter-site-' + siteId);
+        if (!el) return;
+        el.innerText = Math.max(0, Number(value || 0));
+    }
+
+    function getSiteCounter(siteId) {
+        const el = document.getElementById('counter-site-' + siteId);
+        if (!el) return 0;
+        return Number(el.innerText || 0);
+    }
+
+    function incrementSiteCounter(siteId, amount) {
+        amount = Number(amount || 1);
+        const current = getSiteCounter(siteId);
+        setSiteCounter(siteId, current + amount);
+    }
+
+    function refreshAgentChatListPage() {
+        const table = document.querySelector('#chat-table');
+        if (!table) return;
+
+        fetch(window.location.href, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const newTable = doc.querySelector('#chat-table tbody');
+            const newGlobal = doc.querySelector('#global-unread');
+
+            if (newTable) {
+                const currentTbody = document.querySelector('#chat-table tbody');
+                if (currentTbody) currentTbody.innerHTML = newTable.innerHTML;
+            }
+
+            if (newGlobal) {
+                const currentGlobal = document.querySelector('#global-unread');
+                if (currentGlobal) currentGlobal.innerText = newGlobal.innerText;
+            }
+
+            if (typeof applyTablePagination === 'function') {
+                applyTablePagination();
+            }
+        });
+    }
+
+    function startGlobalAgentSSE() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+
+        eventSource = new EventSource('/agent/events?last_id=' + agentLastEventId);
+
+        eventSource.addEventListener('company_message', function (e) {
+            if (e.lastEventId) {
+                agentLastEventId = Number(e.lastEventId);
+                localStorage.setItem('agent_last_event_id', agentLastEventId);
+            }
+
+            let payload = {};
+            try {
+                payload = JSON.parse(e.data || '{}');
+            } catch (err) {
+                payload = {};
+            }
+
+            const eventConversationId = Number(payload.conversation_id || 0);
+            const eventSiteId = Number(payload.site_id || 0);
+
+            const isChatShowPage = !!document.getElementById('chat-box');
+            const isSameOpenConversation = isChatShowPage && currentConversationId > 0 && eventConversationId === currentConversationId;
+
+            if (eventSiteId > 0 && !isSameOpenConversation) {
+                incrementSiteCounter(eventSiteId, 1);
+            }
+
+            if (!isSameOpenConversation) {
+                sound.currentTime = 0;
+                sound.play().catch(function(){});
+            }
+
+            if (document.querySelector('#chat-table')) {
+                refreshAgentChatListPage();
+            }
+            window.dispatchEvent(new CustomEvent('agent-company-message', {
+                detail: payload
+            }));
+        });
+
+        eventSource.onerror = function () {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            setTimeout(startGlobalAgentSSE, 3000);
+        };
+    }
+
+    startGlobalAgentSSE();
+});
+</script>
+@endif
 
 @stack('scripts')
 @stack('after_scripts_stack')
-
 </body>
 </html>

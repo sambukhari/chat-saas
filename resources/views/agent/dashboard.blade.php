@@ -33,7 +33,7 @@
     </div>
 </div>
 
-<div class="neon-card p-4 mt-3">
+<div class="neon-card p-4">
     <h5 class="neon-title">Next build pages</h5>
     <div class="text-muted-neon small">
         /agent/chats • join • reply • close

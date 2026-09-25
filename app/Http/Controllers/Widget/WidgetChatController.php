@@ -3,18 +3,30 @@
 namespace App\Http\Controllers\Widget;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
+use App\Helpers\AgentPresence;
+use App\Jobs\AiRespondToConversationJob;
+use App\Mail\ChatWaitingMail;
+use App\Models\Agent;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Helpers\AgentPresence;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class WidgetChatController extends Controller
 {
+    private const WAIT_SECONDS = 60;
+
     private function site(Request $request)
     {
         return $request->attributes->get('company_site');
+    }
+
+    private function waitUntil(Conversation $conv)
+    {
+        return $conv->created_at->copy()->addSeconds(self::WAIT_SECONDS);
     }
 
     public function validateKey(Request $request)
@@ -48,16 +60,15 @@ class WidgetChatController extends Controller
         $onlineAgents = AgentPresence::onlineAgents($site->company_id);
 
         $conversation = Conversation::create([
-            'uuid' => Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'company_id' => $site->company_id,
             'company_site_id' => $site->id,
             'status' => 'open',
             'visitor_name' => $request->name,
             'visitor_email' => $request->email,
-            'human_wait_expired_at' => now()->addMinutes(2),
         ]);
 
-        // optional system msg
+        // System message => triggers BOTH SSE streams via Message::created() hook
         Message::create([
             'conversation_id' => $conversation->id,
             'sender_type' => 'system',
@@ -65,12 +76,17 @@ class WidgetChatController extends Controller
             'message' => 'Chat started. A support agent will join shortly.',
         ]);
 
-        $this->bumpConversation($conversation->uuid);
+        // If no agents online => join AI instantly
+        if ($onlineAgents->isEmpty()) {
+            $this->joinAiAndNotify($conversation);
+            $conversation->refresh();
+        }
 
         return response()->json([
             'uuid' => $conversation->uuid,
             'agents_online' => $onlineAgents->isNotEmpty(),
-            'wait_until' => $conversation->human_wait_expired_at,
+            'wait_until' => $this->waitUntil($conversation),
+            'handled_by' => $conversation->handled_by,
         ]);
     }
 
@@ -87,15 +103,15 @@ class WidgetChatController extends Controller
             ->where('status', 'open')
             ->firstOrFail();
 
-        // If human already joined
-        if ($conversation->assigned_user_id && $conversation->handled_by === 'human') {
+        // Human joined?
+        if (!empty($conversation->assigned_agent_id)) {
             return response()->json([
                 'assigned' => true,
                 'handled_by' => 'human'
             ]);
         }
 
-        // If AI already joined
+        // AI already joined?
         if ($conversation->handled_by === 'ai') {
             return response()->json([
                 'assigned' => true,
@@ -103,66 +119,21 @@ class WidgetChatController extends Controller
             ]);
         }
 
-        // Wait not expired yet
-        if (now()->lt($conversation->human_wait_expired_at)) {
+        // Still waiting
+        $waitUntil = $this->waitUntil($conversation);
+        if (now()->lt($waitUntil)) {
             return response()->json([
                 'assigned' => false,
-                'wait_remaining' => now()->diffInSeconds($conversation->human_wait_expired_at)
+                'wait_remaining' => now()->diffInSeconds($waitUntil)
             ]);
         }
 
-        // ⛔ 2 minutes expired — escalate
-        $this->escalateToAiAndNotify($conversation);
+        // Expired => join AI
+        $this->joinAiAndNotify($conversation);
 
         return response()->json([
             'assigned' => true,
             'handled_by' => 'ai'
-        ]);
-    }
-
-    protected function escalateToAiAndNotify(Conversation $conversation)
-    {
-        if ($conversation->assigned_user_id) {
-            return; // double safety
-        }
-
-        // 1️⃣ Send emails to company agents
-        $agents = User::role('agent')
-            ->where('company_id', $conversation->company_id)
-            ->get();
-
-        foreach ($agents as $agent) {
-            Mail::to($agent->email)
-                ->queue(new ChatWaitingMail($conversation));
-        }
-
-        // 2️⃣ Assign AI
-        $conversation->update([
-            'assigned_user_id' => 1,
-            'handled_by' => 'ai',
-            'ai_started_at' => now(),
-            'status' => 'assigned',
-        ]);
-
-        // 3️⃣ Add system message
-        Message::create([
-            'conversation_id' => $conversation->id,
-            'sender_type' => 'system',
-            'message' => 'All agents are busy. AI assistant joined.',
-        ]);
-
-        Message::create([
-            'conversation_id' => $conversation->id,
-            'sender_type' => 'ai',
-            'sender_id' => config('app.ai_agent_id'),
-            'message' => "Hi! I'm your AI assistant. How can I help?",
-        ]);
-
-        // 4️⃣ Create event
-        ConversationEvent::create([
-            'conversation_id' => $conversation->id,
-            'conversation_uuid' => $conversation->uuid,
-            'type' => 'assignment',
         ]);
     }
 
@@ -188,6 +159,7 @@ class WidgetChatController extends Controller
         return response()->json([
             'valid' => true,
             'status' => $conversation->status,
+            'handled_by' => $conversation->handled_by,
             'messages' => $messages,
         ]);
     }
@@ -225,14 +197,35 @@ class WidgetChatController extends Controller
             ->where('status', 'open')
             ->firstOrFail();
 
-        $msg = Message::create([
+        // Visitor message => triggers SSE automatically
+        Message::create([
             'conversation_id' => $conversation->id,
             'sender_type' => 'visitor',
             'sender_id' => null,
             'message' => $request->message,
         ]);
 
-        $this->bumpConversation($conversation->uuid, $msg->id);
+        $conversation->refresh();
+
+        // Fallback requirement:
+        // If frontend never called checkAssignment(),
+        // after 1 minute + on next visitor message => join AI.
+        $waitUntil = $this->waitUntil($conversation);
+
+        if (
+            empty($conversation->assigned_agent_id)
+            && $conversation->handled_by !== 'ai'
+            && now()->gte($waitUntil)
+        ) {
+            $this->joinAiAndNotify($conversation);
+            $conversation->refresh();
+        }
+
+        // If AI is active => respond async (best performance)
+        if ($conversation->handled_by === 'ai') {
+            AiRespondToConversationJob::dispatch($conversation->id)
+                ->delay(now()->addSeconds(2)); // debounce burst typing
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -251,24 +244,17 @@ class WidgetChatController extends Controller
 
         $conversation->update(['status' => 'closed']);
 
-        $msg = Message::create([
+        // System message => triggers SSE update
+        Message::create([
             'conversation_id' => $conversation->id,
             'sender_type' => 'system',
             'sender_id' => null,
             'message' => 'Chat ended by visitor.',
         ]);
 
-        $this->bumpConversation($conversation->uuid, $msg->id);
-
         return response()->json(['ok' => true]);
     }
 
-    /**
-     * SSE endpoint:
-     * We do "notify-only SSE" exactly like your current widget:
-     * When server detects a newer message id than last_id, it emits event,
-     * then client calls /messages to fetch actual content.
-     */
     public function events(Request $request)
     {
         $site = $this->site($request);
@@ -279,16 +265,15 @@ class WidgetChatController extends Controller
             ->where('company_site_id', $site->id)
             ->firstOrFail();
 
-        $response = response()->stream(function () use ($conversation, $lastId) {
+        return response()->stream(function () use ($conversation, $lastId) {
             $start = time();
-            $timeout = 25;      // keep short, browser reconnects
+            $timeout = 25;
             $sleep = 2;
 
             while (time() - $start < $timeout) {
                 $latest = (int) Cache::get($this->cacheKey($conversation->uuid), 0);
 
                 if ($latest > $lastId) {
-                    // SSE format
                     echo "id: {$latest}\n";
                     echo "event: message\n";
                     echo "data: {\"ok\":true}\n\n";
@@ -308,8 +293,6 @@ class WidgetChatController extends Controller
             'Connection' => 'keep-alive',
             'X-Accel-Buffering' => 'no',
         ]);
-
-        return $response;
     }
 
     private function cacheKey(string $uuid): string
@@ -317,29 +300,94 @@ class WidgetChatController extends Controller
         return "conv:{$uuid}:last_msg_id";
     }
 
-    private function bumpConversation(string $uuid, ?int $msgId = null): void
+    /**
+     * AI join is DB-locked to prevent double "AI joined" messages.
+     */
+    private function joinAiAndNotify(Conversation $conversation): void
     {
-        if ($msgId) {
-            Cache::put($this->cacheKey($uuid), $msgId, now()->addHours(8));
+        DB::transaction(function () use ($conversation) {
+
+            $conv = Conversation::whereKey($conversation->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Human joined? stop.
+            if (!empty($conv->assigned_agent_id)) {
+                return;
+            }
+
+            // AI already joined? stop.
+            if ($conv->handled_by === 'ai') {
+                return;
+            }
+
+            $conv->update([
+                'handled_by' => 'ai',
+                'ai_started_at' => now(),
+                'assigned_at' => now(),
+                'assigned_user_id' => 1
+            ]);
+
+            // Messages => SSE auto
+            Message::create([
+                'conversation_id' => $conv->id,
+                'sender_type' => 'system',
+                'sender_id' => null,
+                'message' => 'AI assistant joined the chat.',
+            ]);
+
+            Message::create([
+                'conversation_id' => $conv->id,
+                'sender_type' => 'ai',
+                'sender_id' => (int) config('app.ai_agent_id'),
+                'message' => "👋 Hi! I’m your AI assistant. All human agents are busy right now, but I can help. What can I assist you with?",
+            ]);
+
+            Message::create([
+                'conversation_id' => $conv->id,
+                'sender_type' => 'system',
+                'sender_id' => null,
+                'message' => 'We have notified our support staff, they will join shortly.',
+            ]);
+        });
+
+        // Email notify (throttled)
+        $this->notifyCompanyAgentsByEmail($conversation);
+    }
+
+    private function notifyCompanyAgentsByEmail(Conversation $conversation): void
+    {
+        $key = "conv:{$conversation->uuid}:agents_emailed";
+
+        if (!Cache::add($key, 1, now()->addMinutes(10))) {
             return;
         }
 
-        // fallback if needed
-        Cache::put($this->cacheKey($uuid), Cache::get($this->cacheKey($uuid), 0) + 1, now()->addHours(8));
+        $agents = Agent::where('company_id', $conversation->company_id)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($agents as $agent) {
+            Mail::to($agent->email)->queue(new ChatWaitingMail($conversation));
+        }
     }
 
     private function mapMessage($m): array
     {
-        // map to your widget expectation
-        $from =
-            $m->sender_type === 'visitor' ? 'user' :
-            ($m->sender_type === 'agent' ? 'agent' : 'system');
+        // AI should look like agent in widget UI
+        $from = $m->sender_type === 'visitor'
+            ? 'user'
+            : (in_array($m->sender_type, ['agent', 'ai']) ? 'agent' : 'system');
+
+        $senderName = $from === 'user'
+            ? 'You'
+            : ($m->sender_type === 'ai' ? 'AI Assistant' : ($from === 'agent' ? 'Agent' : 'System'));
 
         return [
             'id' => $m->id,
             'from' => $from,
-            'sender_type' => $m->sender_type, // visitor/agent/system/ai
-            'sender_name' => $from === 'user' ? 'You' : ($from === 'agent' ? 'Agent' : 'System'),
+            'sender_type' => $m->sender_type,
+            'sender_name' => $senderName,
             'text' => $m->message,
             'created_at' => optional($m->created_at)->toIso8601String(),
         ];

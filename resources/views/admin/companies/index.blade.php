@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
     <h4>Companies</h4>
     <a href="{{ route('admin.companies.create') }}" class="btn-brand">+ Add Company</a>
 </div>

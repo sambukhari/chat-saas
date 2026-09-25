@@ -92,3 +92,7 @@ Route::prefix('agent')->group(function () {
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/login', function () {
+    return view('lightmode.login');
+});

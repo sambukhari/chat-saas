@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Agent;
 use Illuminate\Support\Facades\Hash;
+use App\Mail\AgentCredentialsMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AgentController extends Controller
 {
@@ -34,15 +37,30 @@ class AgentController extends Controller
             'password' => 'required|min:6'
         ]);
 
-        Agent::create([
+        $plainPassword = $request->password;
+
+        $agent = Agent::create([
             'company_id' => $companyId,
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($plainPassword),
             'is_active' => true
         ]);
 
-        return redirect()->route('company.agents.index');
+        try {
+            Mail::to($agent->email)->send(
+                new AgentCredentialsMail($agent, $plainPassword)
+            );
+
+            if (count(Mail::failures()) > 0) {
+                return back()->with('error', 'Email failed to send.');
+            }
+
+            return back()->with('success', 'Agent created and email sent.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Mail error: '.$e->getMessage());
+        }
     }
 
     public function destroy(Agent $agent)

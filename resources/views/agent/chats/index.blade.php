@@ -1,9 +1,8 @@
 @extends('layouts.neon')
 
 @section('content')
-
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="neon-title mb-0">Chats</h3>
+    <h3 class="neon-title mb-0">Chats <span class="badge bg-warning unread-badge">{{$site->domain}}</span></h3>
 
     <div>
         <span class="me-2 text-muted">Total Unread</span>
@@ -15,25 +14,24 @@
 
 
 <div class="mb-4">
-    <a href="?status=open"
+    <a href="?site={{request()->site}}&status=open"
        class="btn {{ $status=='open' ? 'btn-neon' : 'btn-outline-light' }} me-2">
         Open Chats
     </a>
 
-    <a href="?status=closed"
+    <a href="?site={{request()->site}}&status=closed"
        class="btn {{ $status=='closed' ? 'btn-neon' : 'btn-outline-light' }}">
         Closed Chats
     </a>
 </div>
 
 
-<div class="neon-card p-4">
-
+<div class="neon-card">
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0" id="chat-table">
             <thead>
                 <tr>
-                    <th>UUID</th>
+                    <th>Date</th>
                     <th>Visitor</th>
                     <th>Last Message</th>
                     <th>Status</th>
@@ -51,7 +49,18 @@
                 @endphp
 
                 <tr data-id="{{ $conversation->id }}">
-                    <td>{{ $conversation->uuid }}</td>
+                    <td>
+                         <div class="fw-bold">
+                           {{ $lastMessage->created_at->isToday() 
+                    ? 'Today ' 
+                    : ($lastMessage->created_at->isYesterday() 
+                        ? 'Yesterday ' 
+                        : $lastMessage->created_at->format('F d, Y')) }}
+                        </div>
+                         <small class="text-muted">
+                            {{ $lastMessage->created_at->format('H:i') }}
+                        </small>
+                    </td>
 
                     <td>
                         <div class="fw-bold">
@@ -110,14 +119,118 @@
 
             </tbody>
         </table>
+         <div class="table-pagination" id="table-pagination" style="display:none;">
+        <button class="tp-btn" id="table-prev"><i class="fa fa-chevron-left"></i></button>
+        <span class="tp-info" id="table-info">1 / 1</span>
+        <button class="tp-btn" id="table-next"><i class="fa fa-chevron-right"></i></button>
     </div>
-
+    </div>
 </div>
 
 @endsection
+<style>
+    .table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    background: transparent;
+}
 
+.table-pagination .tp-btn {
+    background: gray;
+    border: none;
+    color: #fff;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s;
+}
+
+.table-pagination .tp-btn:hover:not(:disabled) {
+    background: #0074a3;
+    color: #fff;
+}
+
+.table-pagination .tp-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.table-pagination .tp-info {
+    font-size: 13px;
+    color: #666;
+    min-width: 60px;
+    text-align: center;
+    font-weight: 500;
+}
+</style>
 
 @push('after_scripts_stack')
+<script>
+var _tablePage = 1;
+var PER_TABLE = 8;
+
+function applyTablePagination() {
+    var tbody = document.querySelector('#chat-table tbody');
+    var paginationEl = document.getElementById('table-pagination');
+    var prevBtn = document.getElementById('table-prev');
+    var nextBtn = document.getElementById('table-next');
+    var infoEl = document.getElementById('table-info');
+
+    if (!tbody) return;
+
+    var rows = Array.from(tbody.querySelectorAll('tr')).filter(function(row) {
+        return !row.querySelector('td[colspan]'); // skip "no chats found" row
+    });
+
+    var total = rows.length;
+    var totalPages = Math.max(1, Math.ceil(total / PER_TABLE));
+
+    _tablePage = Math.min(_tablePage, totalPages);
+    var start = (_tablePage - 1) * PER_TABLE;
+
+    // Hide all rows first
+    tbody.querySelectorAll('tr').forEach(function(row) {
+        row.style.display = 'none';
+    });
+
+    // Show only current page rows
+    rows.forEach(function(row, i) {
+        row.style.display = (i >= start && i < start + PER_TABLE) ? '' : 'none';
+    });
+
+    paginationEl.style.display = totalPages > 1 ? 'flex' : 'none';
+    infoEl.textContent = _tablePage + ' / ' + totalPages;
+    prevBtn.disabled = _tablePage === 1;
+    nextBtn.disabled = _tablePage === totalPages;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var prevBtn = document.getElementById('table-prev');
+    var nextBtn = document.getElementById('table-next');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            if (_tablePage > 1) { _tablePage--; applyTablePagination(); }
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            _tablePage++; applyTablePagination();
+        });
+    }
+
+    applyTablePagination();
+});
+</script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 

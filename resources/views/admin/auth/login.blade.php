@@ -1,62 +1,98 @@
 @extends('layouts.neon', ['title' => 'Admin Login'])
-
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-12">
-        <div class="neon-card p-4 p-md-5 neon-glow">
-            <h2 class="neon-title mb-1">Super Admin</h2>
-            <p class="text-muted-neon mb-4">Platform owner login</p>
+<section class="admin_login">
+  <div class="container">
+    
+    <figure class="eze_logo">
+      <a href="/">
+        <img class="F_Logo" src="https://eze.pics/ezead-chat-images/logo2.png" width="224" height="63" alt="Footer Logo">
+      </a>
+    </figure>
 
-            <form method="POST" action="{{ route('admin.login.submit') }}">
-                @csrf
+    <div class="login">
+      <div class="form_title">
+        <h2>Admin Console</h2>
+        <span>Support Admin Login</span>
+      </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input name="email" value="{{ old('email') }}" type="email" class="form-control" placeholder="admin@email.com" required>
-                    @error('email') <div class="small text-danger mt-1">{{ $message }}</div> @enderror
-                </div>
+     <form method="POST" action="{{ route('admin.login.submit') }}">
+        @csrf
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input name="password" type="password" class="form-control" placeholder="••••••••" required>
-                    @error('password') <div class="small text-danger mt-1">{{ $message }}</div> @enderror
-                </div>
+        <div class="field">
+          <label for="email">Email:</label>
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                        <label class="form-check-label text-muted-neon" for="remember">Remember</label>
-                    </div>
-                </div>
+          <div class="input-wrap">
+            <span class="icon"><i class="fa-regular fa-user"></i></span>
 
-                <button class="btn btn-neon w-100 py-2">Login</button>
-            </form>
-            <div class="login-switch mt-4 text-center">
+            <input 
+              type="email"
+              id="email"
+              name="email"
+              placeholder="frank@alltrac.co"
+              value="{{ old('email') }}"
+              autocomplete="email"
+              required
+            />
+          </div>
 
-                <div class="mb-2 text-muted-neon small">
-                    Switch Portal
-                </div>
-            
-                <div class="d-flex justify-content-center gap-2 flex-wrap">
-            
-                
-                    <a href="{{ route('company.login') }}"
-                       class="btn btn-neon-outline btn-sm">
-                        Company Login
-                    </a>
-            
-                    <a href="{{ route('agent.login') }}"
-                       class="btn btn-neon-outline btn-sm">
-                        Agent Login
-                    </a>
-            
-                </div>
-            
-            </div>
+          @error('email')
+          <div class="small text-danger mt-1">{{ $message }}</div>
+          @enderror
         </div>
-        <div class="text-center mt-3 small text-muted-neon">
-            Ezead Support Chat System • Admin Guard
+
+
+        <div class="field">
+          <label for="password">Password:</label>
+
+          <div class="input-wrap">
+            <span class="icon"><i class="fa-solid fa-lock"></i></span>
+
+            <input 
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+
+            <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">
+              <i class="fa-regular fa-eye" id="pwIcon"></i>
+            </button>
+          </div>
+
+          @error('password')
+          <div class="small text-danger mt-1">{{ $message }}</div>
+          @enderror
         </div>
+
+
+        <button type="submit" class="btn-login">Log In</button>
+
+        <div class="meta-row">
+          <a href="#" class="forgot">Lost your password?</a>
+        </div>
+
+      </form>
+
+
+      <div class="switch-portal">
+        <p>Switch Portal</p>
+
+        <div class="portal-btns">
+
+          <a href="{{ route('agent.login') }}" class="btn-portal">
+            Agent Login
+          </a>
+
+          <a href="{{ route('company.login') }}" class="btn-portal">
+            Company Login
+          </a>
+
+        </div>
+      </div>
+
     </div>
-</div>
+  </div>
+</section>
 @endsection
